@@ -1,0 +1,146 @@
+<html>
+    <head>
+        <title>Peer-RTC</title>
+        <style>
+            video
+            {
+               width: 360px;
+               height: 270px;
+               margin: 20px;
+               background-color: #333;
+            }
+            .buttons
+            {
+               margin-left: 20px;
+               float: left;
+            }
+
+            button
+            {
+               background-color: #d84a38;
+               border: none;
+               border-radius: 2px;
+               color: white;
+               font-family: 'Open Sans', sans-serif;
+               font-size: 0.8em;
+               margin: 0 0 1em 0;
+               padding: 0.5em 0.7em 0.6em 0.7em;
+            }
+
+            button:active
+            {
+               background-color: #cf402f;
+            }
+
+            button:hover
+            {
+               background-color: #cf402f;
+               cursor: pointer;
+            }
+            .floatLeft {
+                float: left;
+            }
+            .box {
+                width: 360px;
+                height: 266px;
+                margin-top: 20px;
+                border: solid red;
+            }
+            input[type=text] {
+                margin: 10px;
+            }
+            #login button {
+                margin-left: 20px;
+                width: 100px;
+            }
+            
+            #login h4 {
+                margin-left: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <div class="floatLeft">
+                <video id="mycamp" autoplay></video>
+            </div>
+            <div id="login" class="box floatLeft">
+                <h4>ID: <span id="id"></span></h4>
+                <input id="name" type="text" placeholder="Enter name"/><br>
+                <input id="peer_id" type="text" placeholder="Enter Peer id"/><br>
+                <button id="loginbtn">Login</button>
+                <button id="call">Call</button>
+            </div>
+            <div class="floatLeft">
+                <video id="peercamp" autoplay></video>
+            </div>
+        </div>
+        
+        <script
+            src="https://code.jquery.com/jquery-3.1.1.js"
+            integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA="
+            crossorigin="anonymous"></script>
+        <script src="node_modules/peerjs/dist/peer.min.js"></script>
+        <script>
+            navigator.getUserMedia = navigator.getUserMedia ||
+                         navigator.webkitGetUserMedia ||
+                         navigator.mozGetUserMedia;
+            
+            var constraints = { audio: true, video: true };
+            
+            var video = document.querySelector('#mycamp');
+            var peervid = document.querySelector('#peercamp');
+            var perbutton = document.querySelector('#getPermission');
+            
+            var peer = new Peer({
+                host: 'localhost',
+                port: 9000,
+                path: '/peerjs',
+                debug: 3,
+                config: {'iceServers': [
+                { url: 'stun:stun1.l.google.com:19302' },
+                { url: 'turn:numb.viagenie.ca',
+                  credential: 'muazkh', username: 'webrtc@live.com' }
+                ]}
+            });
+            
+            peer.on('open', function(){
+                $('#id').text(peer.id);
+              });
+            
+            navigator.getUserMedia(constraints, success, error);
+            
+            function success(stream) {
+               if(window.URL) {
+                    video.src = window.URL.createObjectURL(stream);
+               } else {
+                    video.src = stream;
+               }
+            }
+            
+            function error(e) {
+               console.log('navigator.getUserMedia error: ', e);
+            }
+            
+            $('#loginbtn').click(function(){
+                name = $('#name').val();
+                peer_id = $('#peer_id').val();
+                if(peer_id){
+                  conn = peer.connect(peer_id, {metadata: {
+                    'username': name
+                  }});
+                }
+          });
+            
+            peer.on('connection', function(connection){
+                conn = connection;
+                peer_id = connection.peer;
+                conn.on('data', handleMessage);
+
+                console.log(connection.metadata.username);
+          });
+
+            
+        </script>
+    </body>
+</html>
